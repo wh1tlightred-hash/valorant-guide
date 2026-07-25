@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>无畏契约 - 地图详情</title>
+<style>
+  :root {
+    --bg-primary: #0f1923; --bg-secondary: #1a242d; --bg-card: #232f3a;
+    --accent: #ff4655; --accent-dark: #bd3a4a; --text-primary: #ece8e1;
+    --text-secondary: #8b978f; --text-muted: #5b6768; --border: #2a3a48;
+    --duelist: #ff4655; --controller: #8b5cf6; --initiator: #22d3ee; --sentinel: #4ade80;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg-primary); color:var(--text-primary); line-height:1.6; }
+  nav { position:fixed; top:0; width:100%; background:rgba(15,25,35,0.95); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); z-index:1000; padding:0 24px; }
+  .nav-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:60px; }
+  .nav-logo { font-size:1.2rem; font-weight:800; color:var(--accent); text-transform:uppercase; }
+  .nav-back { color:var(--text-secondary); text-decoration:none; font-size:0.9rem; font-weight:500; transition:color 0.2s; }
+  .nav-back:hover { color:var(--text-primary); }
+  .map-hero { height:300px; overflow:hidden; position:relative; margin-top:60px; }
+  .map-hero img { width:100%; height:100%; object-fit:cover; }
+  .map-hero::after { content:""; position:absolute; inset:0; background:linear-gradient(to top,var(--bg-primary) 0%,transparent 60%); }
+  .map-hero-text { position:absolute; bottom:40px; left:48px; z-index:2; }
+  .map-hero-text h1 { font-size:2.4rem; font-weight:900; color:white; text-transform:uppercase; letter-spacing:2px; }
+  .map-hero-text .map-cn { font-size:1.1rem; color:var(--accent); margin-top:4px; }
+  main { max-width:1100px; margin:0 auto; padding:40px 24px 80px; }
+  .section-card { background:var(--bg-secondary); border:1px solid var(--border); border-radius:12px; padding:28px; margin-bottom:24px; }
+  .section-card h2 { font-size:1.4rem; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+  .section-card h2 .sec-icon { font-size:1.5rem; }
+  .section-card h3 { font-size:1.05rem; font-weight:700; color:var(--accent); margin:16px 0 8px; }
+  .section-card p, .section-card li { color:var(--text-secondary); font-size:0.92rem; }
+  .section-card ul { padding-left:20px; }
+  .section-card ul li { padding:3px 0; }
+  .callout-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:12px; }
+  .callout-item { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:18px; }
+  .callout-item h4 { font-size:0.95rem; font-weight:700; color:var(--accent); margin-bottom:6px; }
+  .callout-item p { font-size:0.85rem; color:var(--text-secondary); }
+  .agent-recs { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; }
+  .rec-box { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:18px; }
+  .rec-box h4 { font-size:0.95rem; font-weight:700; margin-bottom:10px; }
+  .rec-row { margin-bottom:10px; }
+  .rec-row .rec-label { font-size:0.82rem; font-weight:600; color:var(--accent); }
+  .rec-row .rec-value { font-size:0.85rem; color:var(--text-secondary); }
+  .tips-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; }
+  .tip-item { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:14px; }
+  .tip-item h4 { font-size:0.9rem; font-weight:700; color:var(--accent); margin-bottom:4px; }
+  .tip-item p { font-size:0.83rem; color:var(--text-secondary); }
+  .features-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .features-row span { background:rgba(255,70,85,0.12); color:var(--accent); padding:4px 12px; border-radius:14px; font-size:0.8rem; font-weight:600; border:1px solid rgba(255,70,85,0.2); }
+  .map-nav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+  .map-nav a { padding:8px 16px; border-radius:8px; border:1px solid var(--border); color:var(--text-secondary); text-decoration:none; font-size:0.85rem; font-weight:500; transition:all 0.2s; background:var(--bg-secondary); }
+  .map-nav a:hover { border-color:var(--accent); color:var(--text-primary); }
+  .map-nav a.current { background:var(--accent); color:white; border-color:var(--accent); }
+  @media (max-width:768px) {
+    .agent-recs { grid-template-columns:1fr; }
+    .map-hero { height:200px; }
+    .map-hero-text h1 { font-size:1.6rem; }
+    .map-hero-text { left:24px; bottom:20px; }
+    main { padding:24px 14px 60px; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">VALORANT · 地图攻略</div>
+    <a href="valorant-guide.html" class="nav-back">← 返回主页</a>
+  </div>
+</nav>
+
+<div id="mapNav" class="map-nav" style="max-width:1100px;margin:80px auto 0;padding:0 24px;"></div>
+
+<div id="mapHero"></div>
+<main id="mapContent"></main>
+
+<script>
+const MAPS = [
+  {
+    "id": "ascent",
+    "name": "Ascent",
+    "cn": "亚海悬城",
+    "img": "valorant-imgs/maps/亚海悬城.png",
+    "desc": "亚海悬城是威尼斯风格的双点地图，以开阔的中路和独特的可开关门机制闻名。作为无畏契约最具代表性的竞技地图之一，它考验队伍的控图能力和信息收集。",
+    "layout": "地图呈经典双点布局：A点位于左侧（攻击方视角），B点在右侧，中间由宽阔的中路连接。A点有A大门、A小道两条进攻路线；B点有B大道和B市场两条通道。中路控制权至关重要——拿下中路可以灵活转点支援两个包点。",
+    "callouts": {
+      "A点": "A点有两个入口：A大门（主干道）和A小道（侧路）。包点内有多个箱子掩体，A天堂（高台）是防守方核心站位。",
+      "B点": "B点通过B大道和B市场进入。B市场是一个室内区域，连接中路和B点。B点有B小房间和B后方的死角。",
+      "中路": "中路分为上中（靠近A侧）和下中（靠近B侧）。中路的两个门可以开关，改变攻守双方的视野和路线。",
+      "A大厅": "攻击方A路线出发点，可通往A大门。",
+      "B大厅": "攻击方B路线出发点，可通往B大道。"
+    },
+    "attack_agents": {
+      "决斗者": "捷风、雷兹（快速突破A小道）",
+      "先锋": "猎枭、斯凯（侦查A/B点防守部署）",
+      "控场者": "幽影、炼狱（中路烟雾隔绝防守视野）"
+    },
+    "defense_agents": {
+      "哨卫": "奇乐、零（B点和A小道的陷阱防守）",
+      "控场者": "幽影、蝰蛇（控制中路视野）"
+    },
+    "attack_tips": [
+      "控制中路是进攻A或B的前提——先拿下中路信息再决定进攻方向",
+      "A小道的突破决定A点攻防成败，配合闪光弹清点",
+      "B大道建议用烟雾封住CT回防路线再推进",
+      "利用可开关的门创造声音干扰和假打战术"
+    ],
+    "defense_tips": [
+      "A小道的控制权至关重要——失去A小道意味着A点可能被包围",
+      "B点防守建议至少1人在B市场观察，防止被B大道Rush",
+      "中路门的管理：开局关闭可以获得信息优势",
+      "及时通报敌人动向，快速回防是被Rush时的关键"
+    ],
+    "features": [
+      "两个可开关的门",
+      "开阔中路",
+      "经典双点布局",
+      "适合步枪对枪"
+    ]
+  },
+  {
+    "id": "bind",
+    "name": "Bind",
+    "cn": "源工重镇",
+    "img": "valorant-imgs/maps/源工重镇.png",
+    "desc": "源工重镇是唯一没有中路的地图，以两个传送门为核心特色。传送门连接A点和B点，让转点和回防变得极快。这张地图对团队配合和传送门的使用时机要求很高。",
+    "layout": "双点地图，无中路。A点和B点分别位于地图两侧，通过传送门相连。A点有A短道和A浴室两条进攻路线；B点通过B长道、B窗口和花园进入。传送门位于A短道外和B长道外，使用后会直接传送到对侧。",
+    "callouts": {
+      "A点": "A点入口有A短道（左侧窄路）和A浴室（右侧室内通道）。防守方通常在A塔楼和A后方站位。",
+      "B点": "B点入口有B长道（主要通道）、B窗口（高台入口）和花园（侧路）。防守方在B高台和B角落防守。",
+      "传送门": "两个传送门分别位于A短道外墙和B长道外墙。传送是单向的，有音效提示，使用后有短暂冷却。",
+      "A浴室": "连接攻击方出生点和A点的室内通道，也是防守方前压的常见位置。",
+      "B窗口": "B点的高台窗口入口，需要跳跃或技能才能进入。"
+    },
+    "attack_agents": {
+      "决斗者": "雷兹、夜露（传送门配合快速转点）",
+      "先锋": "铁壁、斯凯（A浴室/B长道的信息获取）",
+      "控场者": "炼狱、幽影（关键通道的烟雾封锁）"
+    },
+    "defense_agents": {
+      "哨卫": "零、贤者（B长道和A短道的陷阱与控制）",
+      "控场者": "蝰蛇、炼狱（传送门附近区域的封锁）"
+    },
+    "attack_tips": [
+      "传送门可以用来快速转点——佯攻A点后通过传送门瞬间转到B点",
+      "A浴室的控制权决定A点的进攻节奏，配合闪光弹清理角落",
+      "B长道推进需要小心防守方的操作员（狙击枪）架枪",
+      "利用传送门的音效进行心理战——故意使用传送门声东击西"
+    ],
+    "defense_tips": [
+      "密切关注传送门的使用声音——这是敌人转点的最快信号",
+      "A浴室内前压可以获取进攻方A路线的早期信息",
+      "B长道防守建议至少配置一名哨卫布置陷阱",
+      "传送门附近放置陷阱可以有效防止敌人快速转点"
+    ],
+    "features": [
+      "两个传送门",
+      "无中路设计",
+      "紧凑巷战",
+      "快速转点"
+    ]
+  },
+  {
+    "id": "haven",
+    "name": "Haven",
+    "cn": "遗落境地",
+    "img": "valorant-imgs/maps/古城.png",
+    "desc": "遗落境地是无畏契约唯一的三包点地图，拥有A、B、C三个包点。这使得防守方需要更加分散兵力，而攻击方可以根据防守部署选择最薄弱的包点进攻。地图较长，回防时间比其他地图更长。",
+    "layout": "三个包点呈三角形分布：A点在左侧（攻击方视角），B点在中间上层，C点在右侧下层。A点通过A长道和A小道进入；B点通过B窗口和B楼梯进入；C点通过C长道和车库进入。防守方出生点在B点附近。",
+    "callouts": {
+      "A点": "最左侧包点，通过A长道（主路）和A小道（侧路）进入。防守方在A高台和A后方站位。",
+      "B点": "中间包点，地势最高。入口有B窗口（中路方向）和B楼梯（C点方向）。防守方常在B点上层防守。",
+      "C点": "最右侧包点，地势最低。入口有C长道（主路）和车库（侧路）。C点有多个角落可隐蔽。",
+      "车库": "连接攻击方出生点和C点的室内区域，内有通往C点的双开门。",
+      "中路": "位于B点下方的庭院区域，连接A点和C点，是最重要的转点通道。"
+    },
+    "attack_agents": {
+      "决斗者": "捷风、霓虹（快速突破A或C点）",
+      "先锋": "猎枭、斯凯（三角侦查覆盖三个点）",
+      "控场者": "幽影、炼狱（全球/远程烟雾覆盖）"
+    },
+    "defense_agents": {
+      "哨卫": "零、奇乐（C点和A长道的陷阱防守）",
+      "控场者": "幽影、星礈（快速支援各点的烟雾）"
+    },
+    "attack_tips": [
+      "开局先侦查A和C点的防守兵力，选择防守较弱的一侧进攻",
+      "B点容易成为防守的交叉火力点——进攻B点需要多个方向同时推进",
+      "利用人数优势攻击单一包点比分散进攻更有效",
+      "C点的车库控制权对C点进攻至关重要"
+    ],
+    "defense_tips": [
+      "A点和C点至少各放1人，B点1人观察，其余灵活支援",
+      "C点的防守压力通常最大——建议配置哨卫布置陷阱",
+      "快速回防是防守方的核心能力——听到安装声音立即通知队友",
+      "利用B点的高地势观察中路动向"
+    ],
+    "features": [
+      "三个包点",
+      "长距离地图",
+      "多层建筑",
+      "回防时间长"
+    ]
+  },
+  {
+    "id": "split",
+    "name": "Split",
+    "cn": "裂变峡谷",
+    "img": "valorant-imgs/maps/裂变峡谷.png",
+    "desc": "裂变峡谷是一张垂直分层地图，以绳索系统和复杂的中路结构为特色。地图的高差变化极大，掌控中路就等于掌控了整张地图。大量垂直角度让交战场面异常多变。",
+    "layout": "双点地图，A点和B点通过绳索和阶梯连接。A点位于低处（防御方视角），B点在高处。中路有多个层次，绳索可从低处快速到达高处。攻击方进攻路线受地形限制较窄。",
+    "callouts": {
+      "A点": "低处包点，入口有A大道（主路）和A绳道（绳索上来的侧路）。A点后方有A斜坡和A天堂。",
+      "B点": "高处包点，入口有B大道和B天堂（中路绳索上去）。B点地势较高，防守方居高临下。",
+      "中路": "多层结构，有绳索从下中连接到上中。中路控制者可俯瞰A、B两个方向。",
+      "B天堂": "B点的高台区域，可以通过绳索从中路到达，是防守和控制B点的关键位置。",
+      "A绳道": "通过绳索从低处上到A点附近的通道。"
+    },
+    "attack_agents": {
+      "决斗者": "雷兹、不死鸟（A大道和绳索区域的压制）",
+      "先锋": "铁壁、斯凯（穿墙和中路信息获取）",
+      "控场者": "幽影、炼狱（中路视线的全面封锁）"
+    },
+    "defense_agents": {
+      "哨卫": "零、贤者（B天堂和A点的防守封锁）",
+      "控场者": "蝰蛇、幽影（中路和绳索区的控制）"
+    },
+    "attack_tips": [
+      "中路控制是进攻的第一步——拿下中路后可以自由选择A或B",
+      "A大道的推进需要烟雾和闪光的配合，防守方架枪角度很多",
+      "绳索区域是高风险高回报的路线——快速但声音很大",
+      "B天堂是B点的钥匙——谁能控制B天堂谁就控制了B点"
+    ],
+    "defense_tips": [
+      "中路是防守的核心——至少配置1名队员在中路观察",
+      "绳索声音是重要的信息来源——听到绳索声立即报点",
+      "B天堂的防守位置极其重要，建议哨卫在此布置陷阱",
+      "A点的绳索入口需要专人看守，防止敌人从绳索偷上"
+    ],
+    "features": [
+      "垂直分层地形",
+      "绳索系统",
+      "中路控制",
+      "狭窄进攻通道"
+    ]
+  },
+  {
+    "id": "icebox",
+    "name": "Icebox",
+    "cn": "森寒冬港",
+    "img": "valorant-imgs/maps/森寒冬港.png",
+    "desc": "森寒冬港是冰天雪地中的工业港口地图，大量垂直交战角度和集装箱掩体让这张地图的枪战维度远超其他地图。绳索和跳板系统增加了地图的机动性。擅长垂直角度对枪的玩家在此如鱼得水。",
+    "layout": "双点地图，A点和B点通过广阔的中间区域连接。A点有A巢、A管道等多种高度位置；B点有B厨房、B集装箱等掩体。地图中还有多个绳索和跳板供快速上下移动。",
+    "callouts": {
+      "A点": "有多层交战角度——A巢（高处）、A管道（低处室内）、A屏幕后方等。A点防守方通常占据高处位置。",
+      "B点": "以B厨房（室内区域）和B集装箱（室外掩体）为特色。B点防守方常在B高处或B黄箱后站位。",
+      "中路": "连接A、B的开放区域，有集装箱和管道作为掩体。中路的雪地区域是主要交火点。",
+      "A巢": "A点高处的关键位置，可俯瞰整个A点和下方区域，是必争之地。",
+      "B厨房": "B点旁边的室内区域，是防守方在B点的主要活动空间。"
+    },
+    "attack_agents": {
+      "决斗者": "捷风、雷兹（垂直机动和快速清点）",
+      "先锋": "猎枭、斯凯（高空和地下侦查）",
+      "控场者": "蝰蛇、幽影（多层烟雾覆盖）"
+    },
+    "defense_agents": {
+      "哨卫": "奇乐、零（A巢和B厨房的陷阱防守）",
+      "控场者": "蝰蛇（毒墙封住多个通道）"
+    },
+    "attack_tips": [
+      "进攻前务必清理高处角落——A巢和屏幕后是最常见的防守位",
+      "利用绳索和跳板的快速机动来扰乱防守方的架枪角度",
+      "B点的集装箱区域适合霰弹枪和冲锋枪近战",
+      "A管道的侧面突破可以有效分散A点防守注意力"
+    ],
+    "defense_tips": [
+      "占据高处位置是防守的核心优势——A巢和B高台是必守之地",
+      "利用垂直角度交叉火力让进攻方难以同时处理多个方向",
+      "哨卫在A管道和B厨房布置陷阱可以早早发现敌人动向",
+      "注意绳索声音——敌人可能利用绳索快速上下变换角度"
+    ],
+    "features": [
+      "垂直角度多",
+      "绳索跳板系统",
+      "集装箱掩体",
+      "多层交战"
+    ]
+  },
+  {
+    "id": "breeze",
+    "name": "Breeze",
+    "cn": "微风岛屿",
+    "img": "valorant-imgs/maps/微风岛屿.png",
+    "desc": "微风岛屿是热带海岛风格的地图，也是无畏契约中最开阔的地图。极远的交战距离让狙击枪和大口径步枪成为主角。地图的开放空间考验玩家的远距离瞄准能力和站位意识。",
+    "layout": "双点地图，面积较大且视野开阔。A点通过A大厅和A洞穴进入；B点通过B大道和中路隧道进入。A、B点之间距离较远，转点和回防需要较长时间。中路有多个开阔区域。",
+    "callouts": {
+      "A点": "有A金字塔（中心掩体）、A洞穴（侧路入口）和A后方。A点的防守通常部署在A金字塔周围。",
+      "B点": "通过B大道（主路）和B隧道（中路侧路）进入。B点有B柱子作为中心掩体。",
+      "A大厅": "攻击方A路线起点，有A洞穴捷径。",
+      "中路": "开阔的中间区域，连接A和B点。有金字塔形的大型掩体。",
+      "B隧道": "连接中路和B点的地下通道，是进攻B点的侧路选项。"
+    },
+    "attack_agents": {
+      "决斗者": "捷风、壹决（远距离精准击杀）",
+      "先锋": "猎枭、斯凯（大范围侦查）",
+      "控场者": "蝰蛇（大面积毒墙覆盖）、幽影"
+    },
+    "defense_agents": {
+      "哨卫": "零、奇乐（大范围陷阱覆盖）",
+      "控场者": "蝰蛇（封锁开阔视野的关键通道）"
+    },
+    "attack_tips": [
+      "远距离对枪是常态——提前练习狂徒和冥驹的远程控枪",
+      "A洞穴是进攻A点的安全路线，避免暴露在A大道的开阔视野中",
+      "B隧道的控制可以绕过B大道防守方的架枪",
+      "中路的信息获取至关重要——知道敌人站位才能选择安全路线"
+    ],
+    "defense_tips": [
+      "利用开阔视野架枪——狙击枪在这张地图上极其强势",
+      "A金字塔是A点防守的核心掩体，失去它等于失去A点",
+      "B大道的远距离架枪可以给进攻方极大的推进压力",
+      "注意A洞穴和B隧道的侧路突破——需要有人专门看守"
+    ],
+    "features": [
+      "极开阔地形",
+      "远距离对枪",
+      "海岛风格",
+      "狙击枪优势"
+    ]
+  },
+  {
+    "id": "fracture",
+    "name": "Fracture",
+    "cn": "破碎裂谷",
+    "img": "valorant-imgs/maps/天枢云阙.png",
+    "desc": "破碎裂谷是设计最独特的地图——防守方被放在地图中央，攻击方可以从两侧同时进攻。这种H形布局颠覆了传统的攻防概念，要求防守方更加灵活和多线作战。地下的滑索通道提供了快速的转点路线。",
+    "layout": "H形布局，A点和B点位于两侧，防守方出生点在中间。攻击方可以从两条路线同时进攻。A点有A大门和A下层；B点有B大门和B下层。地下滑索连接A侧和B侧，提供快速转点。",
+    "callouts": {
+      "A点": "攻击方从A大门和A下层（地下通道）两面夹击A点。A点防守方需要注意两个方向。",
+      "B点": "同样面临B大门和B下层的两面进攻。B点的塔楼是防守方的关键高地位置。",
+      "地下通道": "连接A侧和B侧的滑索隧道，防守方可以用来快速回防，攻击方可以用来转点。",
+      "A大门": "攻击方A路线的地面入口，正对A点。",
+      "B大门": "攻击方B路线的地面入口，正对B点。"
+    },
+    "attack_agents": {
+      "决斗者": "霓虹、雷兹（利用速度两面夹击）",
+      "先锋": "铁壁、斯凯（穿墙技能效果好）",
+      "控场者": "炼狱、幽影（双向烟雾覆盖）"
+    },
+    "defense_agents": {
+      "哨卫": "零、奇乐（双方向陷阱布置）",
+      "控场者": "幽影、星礈（快速支援两个方向的烟雾）"
+    },
+    "attack_tips": [
+      "双向同时进攻是最有效的战术——A大门和A下层同步推进",
+      "地下滑索可以用来快速转点或假装转点",
+      "利用人数优势集中攻击一个包点，用另一方向牵制防守",
+      "进攻前先确认防守方在地下通道的布置"
+    ],
+    "defense_tips": [
+      "每个包点至少需要能观察两个方向——单人防守极其困难",
+      "地下通道的滑索声音是重要的转点信号",
+      "哨卫需要在一个包点布置两个方向的陷阱",
+      "快速回防和灵活换位是防守成功的关键"
+    ],
+    "features": [
+      "双向进攻",
+      "地下滑索通道",
+      "H形布局",
+      "中央防守"
+    ]
+  },
+  {
+    "id": "pearl",
+    "name": "Pearl",
+    "cn": "深海明珠",
+    "img": "valorant-imgs/maps/深海明珠.png",
+    "desc": "深海明珠是海底城市主题的地图，狭窄的通道与开阔的广场交错分布。A点和B点的进攻路线各具特色——A点偏开阔，B点偏狭窄。中路拱门是整张地图的控制中心。",
+    "layout": "双点地图，A点在左侧，B点在右侧。A点通过A大道（开阔主干道）和A连接（中路侧路）进入；B点通过B长道（狭窄长走廊）和B连接（中路侧路）进入。中路有大拱门连接两侧。",
+    "callouts": {
+      "A点": "A点较为开阔，有A后方和A角落作为掩体。A大道的远距离是防守方狙击枪的优势位置。",
+      "B点": "B点较为狭小，有B塔楼（高处）和B角落。B长道极为狭窄，适合霰弹枪和冲锋枪。",
+      "中路": "中路拱门是交通枢纽，连接A连接和B连接，控制中路可以自由支援两侧。",
+      "A大道": "A点的主进攻路线，视野开阔，适合远程对枪。",
+      "B长道": "B点的主进攻路线，极为狭窄，需要闪光弹和烟雾配合推进。"
+    },
+    "attack_agents": {
+      "决斗者": "不死鸟、雷兹（狭窄通道的闪光和爆破优势）",
+      "先锋": "斯凯、铁壁（通道侦查和穿墙）",
+      "控场者": "幽影、星礈（拱门和中路封锁）"
+    },
+    "defense_agents": {
+      "哨卫": "零、贤者（A大道和B长道的防守）",
+      "控场者": "蝰蛇、幽影（拱门区域的控制）"
+    },
+    "attack_tips": [
+      "A大道的远距离对枪需要狙击枪或精准步枪支持",
+      "B长道极其狭窄——需要烟雾和闪光弹才能安全推进",
+      "中路拱门的控制决定了进攻的灵活性——拿下拱门再选择方向",
+      "A连接和B连接是侧路突破的好选择，配合主路正面推进"
+    ],
+    "defense_tips": [
+      "A大道是防守方的狙击位优势区域——利用远距离架枪",
+      "B长道的狭窄特性让防守方可以一夫当关——但要注意闪光弹",
+      "拱门是中路的必争之地——失去拱门等于失去信息优势",
+      "B塔楼的高处位置防守B点有天然优势"
+    ],
+    "features": [
+      "水下城市风格",
+      "中路拱门枢纽",
+      "A开B窄格局",
+      "长走廊对枪"
+    ]
+  },
+  {
+    "id": "lotus",
+    "name": "Lotus",
+    "cn": "莲华古城",
+    "img": "valorant-imgs/maps/莲华古城.png",
+    "desc": "莲华古城是印度古城遗迹主题的三包点地图（与遗落境地并列为三包点地图）。旋转门机制和独特的破坏性环境让这张地图的战术深度极高。三个包点之间有复杂的路径连接。",
+    "layout": "三个包点呈线形排列：A点在最左侧，B点在中间，C点在右侧。A点通过A树根和A小道进入；B点通过B中道进入；C点通过C大道和C侧道进入。地图中有旋转门可改变走廊的通行方向。",
+    "callouts": {
+      "A点": "最左侧包点，入口有A树根（主路）和A小道（侧路）。A点后有A后方。",
+      "B点": "中间包点，地势较开阔。入口有B中道。B点是三个包点中相对最容易被突破的。",
+      "C点": "最右侧包点，入口有C大道和C侧道。C点有多个角落和平台。",
+      "旋转门": "连接不同区域的旋转门，可改变通行状态。正确的门状态管理可以创造或阻断进攻路线。",
+      "A树根": "攻击方通往A点的主通道，有上下两层。"
+    },
+    "attack_agents": {
+      "决斗者": "捷风、夜露（多点快速转移）",
+      "先锋": "猎枭、斯凯（三角侦查覆盖）",
+      "控场者": "幽影、炼狱（三向烟雾支持）"
+    },
+    "defense_agents": {
+      "哨卫": "零、奇乐（关键路口的陷阱防守）",
+      "控场者": "幽影、星礈（全局烟雾控制）"
+    },
+    "attack_tips": [
+      "侦查防守方的人员分布——三个包点必有防守薄弱的一侧",
+      "旋转门可以用来快速转点或出其不意地改变进攻方向",
+      "B点作为中间包点是分割防守方的最佳目标",
+      "A树根的双层结构需要清理两个高度再推进"
+    ],
+    "defense_tips": [
+      "三人防守三个包点意味着每个点都相对薄弱——快速支援是关键",
+      "旋转门的控制权非常重要，正确的门状态可以限制进攻路线",
+      "哨卫在关键路口布置陷阱可以弥补兵力不足",
+      "听到安装声音立即转点——利用旋转门快速到达"
+    ],
+    "features": [
+      "三个包点",
+      "旋转门机制",
+      "古老遗迹风格",
+      "复杂路径"
+    ]
+  },
+  {
+    "id": "sunset",
+    "name": "Sunset",
+    "cn": "日落之城",
+    "img": "valorant-imgs/maps/日落之城.png",
+    "desc": "日落之城是洛杉矶风格的城市街道地图。经典双点布局配合可破坏的门机制，是一张相对传统但充满细节的竞技地图。适合新手快速上手，同时也有足够的深度供高端玩家挖掘。",
+    "layout": "双点地图，A点在左侧，B点在右侧。A点通过A大道和A连接进入；B点通过B大道和B市场进入。中路连接两侧。地图中的部分门可以被破坏，改变通行和视野条件。",
+    "callouts": {
+      "A点": "通过A大道（开阔主干道）和A连接（中路侧路）进入。A点后方有A后方掩体。",
+      "B点": "通过B大道（主路）和B市场（室内侧路）进入。B点有B角落和B高台。",
+      "中路": "连接A和B的中间区域，控制中路可以自由转点支援。",
+      "B市场": "B点附近的室内区域，可通往中路和B点，是重要的侧路通道。",
+      "A连接": "从中路通往A点的通道，是防守方观察A点动向的位置。"
+    },
+    "attack_agents": {
+      "决斗者": "不死鸟、雷兹（传统地图的经典突破）",
+      "先锋": "斯凯、猎枭（标准双点侦查）",
+      "控场者": "炼狱、幽影（双点烟雾支持）"
+    },
+    "defense_agents": {
+      "哨卫": "零、贤者（经典双点陷阱防守）",
+      "控场者": "幽影、炼狱（中路和A大道控制）"
+    },
+    "attack_tips": [
+      "A大道的推进需要烟雾封住防守方的架枪视角",
+      "B市场的控制权决定B点进攻的灵活性",
+      "可破坏的门可以制造新的角度和路线——善加利用",
+      "中路推进搭配侧面夹击是最经典的进攻战术"
+    ],
+    "defense_tips": [
+      "A大道是防守方的强势架枪位置——但容易被闪光弹反制",
+      "B市场的防守需要1人观察，防止敌人从室内摸到B点",
+      "可破坏的门可以被防守方用来出其不意地反击",
+      "中路的灵活防守可以同时支援A和B两个方向"
+    ],
+    "features": [
+      "可破坏的门",
+      "城市街道风格",
+      "经典双点布局",
+      "新手友好"
+    ]
+  },
+  {
+    "id": "abyss",
+    "name": "Abyss",
+    "cn": "幽邃地窟",
+    "img": "valorant-imgs/maps/幽邃地窟.png",
+    "desc": "幽邃地窟是最新加入竞技地图池的地图，以极端的垂直落差和跌落即死的深渊为特色。这张地图考验玩家的走位精准度和对边缘区域的风险管理能力。一个失误的走位就可能直接坠入深渊。",
+    "layout": "双点地图，A点和B点之间有大面积的无底深渊分隔。A点通过A桥和A侧道进入；B点通过B桥和B侧道进入。地图中有多个狭窄的桥梁和边缘通道，走位不当会直接跌落死亡。",
+    "callouts": {
+      "A点": "通过A桥（主路）和A侧道（边缘通道）进入。A点平台紧邻深渊，防守时需要小心走位。",
+      "B点": "通过B桥和B侧道进入。B点同样有深渊危险区域，部分位置跌落即死。",
+      "深渊": "地图中的大片无底区域，跌落即死。部分技能可以把敌人推入深渊。",
+      "A桥": "通往A点的主要桥梁，两侧无护栏，需要小心移动。",
+      "B桥": "通往B点的主要桥梁，同样存在跌落风险。"
+    },
+    "attack_agents": {
+      "决斗者": "捷风、雷兹（利用位移安全过桥）",
+      "先锋": "铁壁、斯凯（穿墙和桥梁侦查）",
+      "控场者": "幽影、炼狱（桥梁烟雾覆盖）"
+    },
+    "defense_agents": {
+      "哨卫": "零、贤者（桥梁和侧道的防守布置）",
+      "控场者": "蝰蛇、幽影（深渊边缘的封锁）"
+    },
+    "attack_tips": [
+      "桥梁区域的推进需要烟雾掩护——在桥上被架枪几乎没有掩体",
+      "利用技能将防守方推入深渊是非常高效的击杀方式",
+      "侧道虽然更安全，但更容易被防守方预判和伏击",
+      "雷兹的爆破包、贤者的冰墙等位移技能在这张地图上有特殊价值"
+    ],
+    "defense_tips": [
+      "守住桥梁入口是最基本的防守策略——桥梁是进攻的必经之路",
+      "利用深渊边缘的角度架枪——进攻方在桥上几乎没有掩体",
+      "注意敌人的位移技能——可能被推出边缘坠入深渊",
+      "侧道的防守同样重要——但不要站得离深渊太近"
+    ],
+    "features": [
+      "高低落差",
+      "跌落即死",
+      "狭窄桥梁",
+      "高风险走位"
+    ]
+  }
+];
+
+function getMap(id) {
+  return MAPS.find(m => m.id === id) || MAPS[0];
+}
+
+function render() {
+  const hash = window.location.hash.replace('#', '') || 'ascent';
+  const map = getMap(hash);
+
+  document.title = map.cn + ' ' + map.name + ' - 无畏契约地图攻略';
+
+  // Nav buttons
+  document.getElementById('mapNav').innerHTML = MAPS.map(m =>
+    `<a href="#${m.id}" class="${m.id === hash ? 'current' : ''}">${m.cn}</a>`
+  ).join('');
+
+  // Hero
+  document.getElementById('mapHero').innerHTML = `
+    <div class="map-hero">
+      <img src="${map.img}" alt="${map.cn}" onerror="this.style.display='none'">
+      <div class="map-hero-text"><h1>${map.name}</h1><div class="map-cn">${map.cn}</div></div>
+    </div>`;
+
+  // Agent recs HTML
+  const attackRecs = Object.entries(map.attack_agents).map(([role, agents]) =>
+    `<div class="rec-row"><span class="rec-label">${role}：</span><span class="rec-value">${agents}</span></div>`
+  ).join('');
+  const defenseRecs = Object.entries(map.defense_agents).map(([role, agents]) =>
+    `<div class="rec-row"><span class="rec-label">${role}：</span><span class="rec-value">${agents}</span></div>`
+  ).join('');
+
+  // Callouts HTML
+  const callouts = Object.entries(map.callouts).map(([name, desc]) =>
+    `<div class="callout-item"><h4>${name}</h4><p>${desc}</p></div>`
+  ).join('');
+
+  // Tips HTML
+  const attackTips = map.attack_tips.map((t, i) =>
+    `<div class="tip-item"><h4>进攻要点 ${i+1}</h4><p>${t}</p></div>`
+  ).join('');
+  const defenseTips = map.defense_tips.map((t, i) =>
+    `<div class="tip-item"><h4>防守要点 ${i+1}</h4><p>${t}</p></div>`
+  ).join('');
+
+  document.getElementById('mapContent').innerHTML = `
+    <div class="section-card">
+      <h2><span class="sec-icon">📖</span>地图概述</h2>
+      <p>${map.desc}</p>
+    </div>
+    <div class="section-card">
+      <h2><span class="sec-icon">🗺️</span>地图布局</h2>
+      <p>${map.layout}</p>
+    </div>
+    <div class="section-card">
+      <h2><span class="sec-icon">📍</span>关键位置</h2>
+      <div class="callout-grid">${callouts}</div>
+    </div>
+    <div class="section-card">
+      <h2><span class="sec-icon">🦸</span>推荐特工</h2>
+      <div class="agent-recs">
+        <div class="rec-box">
+          <h4>⚔️ 进攻方推荐</h4>
+          ${attackRecs}
+        </div>
+        <div class="rec-box">
+          <h4>🛡️ 防守方推荐</h4>
+          ${defenseRecs}
+        </div>
+      </div>
+    </div>
+    <div class="section-card">
+      <h2><span class="sec-icon">⚔️</span>进攻战术</h2>
+      <div class="tips-grid">${attackTips}</div>
+    </div>
+    <div class="section-card">
+      <h2><span class="sec-icon">🛡️</span>防守战术</h2>
+      <div class="tips-grid">${defenseTips}</div>
+    </div>
+    <div class="section-card">
+      <h2><span class="sec-icon">🏷️</span>地图特征</h2>
+      <div class="features-row">${map.features.map(f => `<span>${f}</span>`).join('')}</div>
+    </div>`;
+}
+
+window.addEventListener('hashchange', () => { window.scrollTo(0,0); render(); });
+render();
+</script>
+</body>
+</html>
